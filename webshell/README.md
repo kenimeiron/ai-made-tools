@@ -1,0 +1,1 @@
+deepseek写的,一个文件管理器,一个shell脚本
